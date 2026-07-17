@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a1c22">
+<title>Падел · Американо · Тайминг</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#081419; --turf:#0c2027; --turf-2:#103039; --line:#1c4450;
+    --ball:#d6f24a; --ball-dim:#9ab83a; --coral:#ff6a4d; --coral-dim:#c24a37;
+    --ink:#eef6f4; --muted:#7ba0a6; --muted-2:#547a80;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{background:radial-gradient(120% 60% at 50% -10%, #12333d 0%, transparent 60%), var(--bg);color:var(--ink);font-family:"Inter",system-ui,-apple-system,sans-serif;min-height:100dvh;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:460px;margin:0 auto;padding:16px 16px 40px;}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .eyebrow{font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.18em;font-weight:600;font-size:12px;color:var(--ball);margin:0 0 2px;}
+  .clock{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:44px;line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:.01em;}
+  .startbox{text-align:right;}
+  .startbox label{display:block;font-size:11px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+  .startbox input{background:var(--turf);border:1px solid var(--line);color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:20px;border-radius:10px;padding:6px 8px;width:104px;text-align:center;font-variant-numeric:tabular-nums;}
+  .startbox input:focus{outline:2px solid var(--ball);outline-offset:1px;}
+
+  .status{border-radius:20px;padding:20px 18px 18px;margin-bottom:16px;background:linear-gradient(180deg,var(--turf-2),var(--turf));border:1px solid var(--line);position:relative;overflow:hidden;transition:border-color .3s;}
+  .status .tag{font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.14em;font-weight:600;font-size:13px;color:var(--muted);margin:0 0 6px;}
+  .drift{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:64px;line-height:.85;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:10px;}
+  .drift .word{font-size:30px;letter-spacing:.02em;text-transform:uppercase;}
+  .status.ahead{border-color:var(--ball-dim);} .status.ahead .drift{color:var(--ball);}
+  .status.behind{border-color:var(--coral-dim);} .status.behind .drift{color:var(--coral);}
+  .status.ontime .drift{color:var(--ink);}
+  .status.done{border-color:var(--ball-dim);} .status.done .drift{color:var(--ball);font-size:40px;}
+  .sub{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-variant-numeric:tabular-nums;}
+  .chip b{color:var(--ink);font-weight:600;}
+  .chip.warn{color:var(--coral);border-color:var(--coral-dim);}
+
+  .control{display:flex;align-items:stretch;gap:12px;margin-bottom:16px;}
+  .step{flex:0 0 68px;border-radius:18px;border:1px solid var(--line);background:var(--turf);color:var(--ink);font-size:40px;font-weight:400;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:"Barlow Condensed",sans-serif;user-select:none;transition:background .12s,transform .08s;}
+  .step:active{background:var(--turf-2);transform:scale(.96);}
+  .step:disabled{opacity:.3;cursor:default;}
+  .step:focus-visible{outline:2px solid var(--ball);outline-offset:2px;}
+  .tile{flex:1;border-radius:18px;cursor:pointer;user-select:none;background:radial-gradient(120% 90% at 50% 0%, rgba(214,242,74,.10), transparent 70%),linear-gradient(180deg,var(--turf-2),var(--turf));border:1px solid var(--ball-dim);padding:14px 10px 12px;text-align:center;position:relative;transition:transform .1s,box-shadow .2s;box-shadow:0 0 0 rgba(214,242,74,0);}
+  .tile:active{transform:scale(.985);}
+  .tile:focus-visible{outline:2px solid var(--ball);outline-offset:2px;}
+  .tile .lbl{font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:13px;color:var(--ball);font-weight:600;}
+  .tile .num{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:82px;line-height:.82;font-variant-numeric:tabular-nums;margin:2px 0 2px;}
+  .tile .hint{font-size:12px;color:var(--muted);letter-spacing:.02em;}
+  .tile.flash{animation:pop .45s ease;}
+  @keyframes pop{0%{box-shadow:0 0 0 0 rgba(214,242,74,.5);}100%{box-shadow:0 0 0 22px rgba(214,242,74,0);}}
+
+  .card{background:var(--turf);border:1px solid var(--line);border-radius:18px;padding:14px 14px 6px;margin-bottom:16px;}
+  .card h2{margin:0 0 6px;font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:14px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px;}
+  .card h2 span{color:var(--ball);text-align:right;font-weight:600;letter-spacing:.04em;}
+
+  .set{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.05);}
+  .set:first-of-type{border-top:none;}
+  .set .name{font-size:15px;font-weight:500;}
+  .set .name small{display:block;color:var(--muted-2);font-size:12px;margin-top:2px;font-weight:400;}
+  .stepper{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+  .stepper button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--turf-2);color:var(--ink);font-size:26px;font-family:"Barlow Condensed",sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .12s,transform .08s;}
+  .stepper button:active{background:var(--line);transform:scale(.94);}
+  .stepper button:disabled{opacity:.3;cursor:default;}
+  .stepper button:focus-visible{outline:2px solid var(--ball);outline-offset:2px;}
+  .stepper .val{min-width:66px;text-align:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;}
+  .cfgline{padding:10px 0 8px;border-top:1px solid rgba(255,255,255,.05);color:var(--muted);font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums;}
+  .cfgline b{color:var(--ink);font-weight:600;}
+
+  .rounds{list-style:none;margin:0;padding:0;}
+  .r{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;border:1px solid transparent;margin-bottom:6px;font-variant-numeric:tabular-nums;}
+  .r .rn{flex:0 0 30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;background:var(--turf-2);color:var(--muted);border:1px solid var(--line);}
+  .r .win{flex:1;font-size:14px;color:var(--muted);}
+  .r .win b{color:var(--ink);font-weight:600;}
+  .r .st{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .r.now{background:rgba(214,242,74,.06);border-color:var(--ball-dim);}
+  .r.now .rn{background:var(--ball);color:#0a1a10;border-color:var(--ball);}
+  .r.now .st{color:var(--ball);}
+  .r.done .rn{background:var(--turf-2);color:var(--muted-2);}
+  .r.done .win b{color:var(--muted);}
+  .r.done .st.ahead{color:var(--ball-dim);} .r.done .st.behind{color:var(--coral);} .r.done .st.ontime{color:var(--muted);}
+  .r.todo{opacity:.55;}
+
+  .reset{display:block;margin:0 auto;background:none;border:1px solid var(--line);color:var(--muted);font-size:13px;padding:10px 18px;border-radius:11px;cursor:pointer;font-family:"Inter",sans-serif;transition:background .12s,color .12s;}
+  .reset:active{background:var(--turf);color:var(--ink);}
+  .reset:focus-visible{outline:2px solid var(--ball);outline-offset:2px;}
+  .foot{color:var(--muted-2);font-size:12px;text-align:center;margin-top:14px;line-height:1.5;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Падел · Американо</p>
+      <div class="clock" id="clock">--:--</div>
+    </div>
+    <div class="startbox">
+      <label for="start">Старт</label>
+      <input type="time" id="start" value="20:00">
+    </div>
+  </header>
+
+  <section class="status ontime" id="status">
+    <p class="tag" id="statusTag">Отклонение от графика</p>
+    <div class="drift" id="drift"><span class="word">По графику</span></div>
+    <div class="sub" id="sub"></div>
+  </section>
+
+  <div class="control">
+    <button class="step" id="minus" aria-label="Уменьшить номер раунда">−</button>
+    <div class="tile" id="tile" role="button" tabindex="0" aria-label="Завершить текущий раунд">
+      <div class="lbl">Раунд</div>
+      <div class="num" id="roundNum">1</div>
+      <div class="hint" id="tileHint">нажми — раунд завершён</div>
+    </div>
+    <button class="step" id="plus" aria-label="Увеличить номер раунда">+</button>
+  </div>
+
+  <section class="card">
+    <h2>Настройки турнира</h2>
+    <div class="set">
+      <div class="name">Игроков<small>участников всего</small></div>
+      <div class="stepper">
+        <button id="pDown" aria-label="Меньше игроков">−</button>
+        <div class="val" id="pVal">12</div>
+        <button id="pUp" aria-label="Больше игроков">+</button>
+      </div>
+    </div>
+    <div class="set">
+      <div class="name">Кортов<small id="cHint">по 4 игрока на корте</small></div>
+      <div class="stepper">
+        <button id="cDown" aria-label="Меньше кортов">−</button>
+        <div class="val" id="cVal">3</div>
+        <button id="cUp" aria-label="Больше кортов">+</button>
+      </div>
+    </div>
+    <div class="set">
+      <div class="name">Разминка<small>перед первым раундом</small></div>
+      <div class="stepper">
+        <button id="wDown" aria-label="Меньше разминки">−</button>
+        <div class="val" id="wVal">5 мин</div>
+        <button id="wUp" aria-label="Больше разминки">+</button>
+      </div>
+    </div>
+    <div class="cfgline" id="cfgLine"></div>
+  </section>
+
+  <section class="card">
+    <h2>Расписание <span id="planNow"></span></h2>
+    <ul class="rounds" id="rounds"></ul>
+  </section>
+
+  <button class="reset" id="reset">Новый турнир · сбросить</button>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- fixed frame ----
+  var BOOKING=120*60;   // 2-hour court booking (seconds)
+  var CHANGE=120;       // court change between rounds (seconds)
+
+  // ---- editable config ----
+  var players=12, courts=3, warmupMin=5;
+  var startInput=document.getElementById("start");
+
+  // ---- persistence (works in Safari; degrades quietly if storage is blocked) ----
+  var SKEY="padel-americano-v1";
+  function saveState(){
+    try{
+      localStorage.setItem(SKEY, JSON.stringify({
+        players:players, courts:courts, warmupMin:warmupMin,
+        start:startInput.value, cur:cur, finished:finished, done:done
+      }));
+    }catch(e){}
+  }
+  function loadState(){
+    try{
+      var s=localStorage.getItem(SKEY); if(!s) return;
+      var o=JSON.parse(s);
+      if(typeof o.players==="number") players=o.players;
+      if(typeof o.courts==="number") courts=o.courts;
+      if(typeof o.warmupMin==="number") warmupMin=o.warmupMin;
+      if(o.start) startInput.value=o.start;
+      if(typeof o.cur==="number") cur=o.cur;
+      if(typeof o.finished==="boolean") finished=o.finished;
+      if(o.done && typeof o.done==="object") done=o.done;
+    }catch(e){}
+  }
+  function resetAll(){
+    if(!confirm("Сбросить турнир? Настройки и прогресс раундов очистятся.")) return;
+    players=12; courts=3; warmupMin=5; startInput.value="20:00";
+    cur=1; finished=false; done={};
+    try{ localStorage.removeItem(SKEY); }catch(e){}
+    rebuild(); syncAll();
+  }
+
+  // ---- Russian plural helper ----
+  function plu(n,one,few,many){
+    var m10=n%10,m100=n%100;
+    if(m10===1&&m100!==11)return one;
+    if(m10>=2&&m10<=4&&!(m100>=12&&m100<=14))return few;
+    return many;
+  }
+
+  // ---- derived (rebuilt on any config change) ----
+  var rounds, rest, warmupSec, roundDur, win, TOTAL_END;
+  // Rounds for a full partner rotation: each player needs P-1 playing-rounds,
+  // but only 4*C play per round, so total rounds = P*(P-1)/(4*C), rounded.
+  function roundsFor(P,C){ return Math.max(1, Math.round(P*(P-1)/(4*C))); }
+  function maxCourts(){ return Math.max(1,Math.floor(players/4)); }
+
+  function rebuild(){
+    if(courts>maxCourts())courts=maxCourts();
+    if(courts<1)courts=1;
+    rounds=roundsFor(players,courts);
+    rest=Math.max(0,players-4*courts);
+    warmupSec=warmupMin*60;
+    var game=BOOKING - warmupSec - (rounds-1)*CHANGE;
+    roundDur=game/rounds;                 // evenly fill the 2-hour window
+    win=[]; var t=warmupSec;
+    for(var i=0;i<rounds;i++){ win.push({start:t,end:t+roundDur}); t=t+roundDur+CHANGE; }
+    TOTAL_END=win[rounds-1].end;          // == BOOKING
+    if(cur>rounds){cur=rounds;finished=false;}
+    for(var k in done){ if(+k>rounds) delete done[k]; }
+  }
+
+  // ---- state ----
+  var cur=1, finished=false, done={};
+
+  // ---- helpers ----
+  function startDate(){var v=(startInput.value||"20:00").split(":");var d=new Date();d.setHours(+v[0]||0,+v[1]||0,0,0);return d;}
+  function schedEnd(r){return new Date(startDate().getTime()+win[r-1].end*1000);}
+  function schedStart(r){return new Date(startDate().getTime()+win[r-1].start*1000);}
+  function hhmm(d){return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+  function hhmmss(d){return hhmm(d)+":"+String(d.getSeconds()).padStart(2,"0");}
+  function ms(sec){var s=Math.round(Math.abs(sec)),m=Math.floor(s/60);return m+":"+String(s%60).padStart(2,"0");}
+  function planRoundNow(now){
+    var off=(now-startDate())/1000;
+    if(off<warmupSec) return {phase:"warmup"};
+    for(var i=0;i<rounds;i++){
+      if(off>=win[i].start && off<win[i].end) return {phase:"round",r:i+1};
+      if(off<win[i].start) return {phase:"change",r:i+1};
+    }
+    return {phase:"over"};
+  }
+
+  // ---- timeline ----
+  function renderRounds(){
+    var ul=document.getElementById("rounds"),html="";
+    for(var r=1;r<=rounds;r++){
+      var cls="r",st="",stCls="",window=hhmm(schedStart(r))+"–"+hhmm(schedEnd(r));
+      if(done[r]!==undefined){
+        cls+=" done";var dl=done[r].delta;
+        if(dl>15){stCls="ahead";st="+"+ms(dl);}
+        else if(dl<-15){stCls="behind";st="−"+ms(dl);}
+        else{stCls="ontime";st="точно";}
+      }else if(r===cur && !finished){cls+=" now";st="идёт";}
+      else{cls+=" todo";}
+      html+='<li class="'+cls+'"><div class="rn">'+r+'</div><div class="win">Раунд <b>'+r+'</b> · '+window+'</div><div class="st '+stCls+'">'+st+'</div></li>';
+    }
+    ul.innerHTML=html;
+  }
+
+  // ---- live status ----
+  function tick(){
+    var now=new Date();
+    document.getElementById("clock").textContent=hhmmss(now);
+    var box=document.getElementById("status"),driftEl=document.getElementById("drift"),
+        subEl=document.getElementById("sub"),tag=document.getElementById("statusTag");
+
+    var pn=planRoundNow(now),planTxt="";
+    if(pn.phase==="warmup")planTxt="разминка";
+    else if(pn.phase==="round")planTxt="раунд "+pn.r;
+    else if(pn.phase==="change")planTxt="смена → раунд "+pn.r;
+    else planTxt="финиш";
+    document.getElementById("planNow").textContent="· по плану: "+planTxt;
+
+    if(finished){
+      box.className="status done";tag.textContent="Турнир завершён";
+      var last=done[rounds]?done[rounds].delta:0;
+      driftEl.innerHTML='<span class="word">Готово 🎉</span>';
+      subEl.innerHTML='<span class="chip">Финиш <b>'+hhmm(now)+'</b></span><span class="chip">'+(last>=0?'опережение':'отставание')+' <b>'+ms(last)+'</b></span>';
+      return;
+    }
+    var drift=(schedEnd(cur)-now)/1000,absTxt=ms(drift);
+    if(drift>15){box.className="status ahead";tag.textContent="Опережение графика";driftEl.innerHTML='<span>+'+absTxt+'</span>';}
+    else if(drift<-15){box.className="status behind";tag.textContent="Отставание от графика";driftEl.innerHTML='<span>−'+absTxt+'</span>';}
+    else{box.className="status ontime";tag.textContent="Отклонение от графика";driftEl.innerHTML='<span class="word">По графику</span>';}
+
+    var projFinish=new Date(startDate().getTime()+TOTAL_END*1000-drift*1000);
+    subEl.innerHTML='<span class="chip">Раунд '+cur+' по плану до <b>'+hhmm(schedEnd(cur))+'</b></span><span class="chip'+(drift<-15?' warn':'')+'">Прогноз финиша <b>'+hhmm(projFinish)+'</b></span>';
+  }
+
+  // ---- round actions ----
+  function completeRound(){
+    if(finished)return;
+    var now=new Date();
+    done[cur]={delta:(schedEnd(cur)-now)/1000};
+    var tile=document.getElementById("tile");
+    tile.classList.remove("flash");void tile.offsetWidth;tile.classList.add("flash");
+    if(navigator.vibrate)navigator.vibrate(30);
+    if(cur>=rounds){finished=true;}else{cur++;}
+    syncAll();
+  }
+  function decRound(){if(cur>1){cur--;delete done[cur];}if(finished){finished=false;delete done[rounds];}syncAll();}
+  function incRound(){if(finished)return;if(cur<rounds)cur++;syncAll();}
+
+  // ---- config actions ----
+  function setPlayers(v){players=Math.max(4,Math.min(40,v));if(courts>maxCourts())courts=maxCourts();rebuild();syncAll();}
+  function setCourts(v){courts=Math.max(1,Math.min(maxCourts(),v));rebuild();syncAll();}
+  function setWarmup(v){warmupMin=Math.max(0,Math.min(20,v));rebuild();syncAll();}
+
+  // ---- sync ----
+  function syncAll(){
+    document.getElementById("roundNum").textContent=finished?"✓":cur;
+    document.getElementById("tileHint").textContent=finished?"турнир завершён":"нажми — раунд завершён";
+    document.getElementById("minus").disabled=(cur<=1 && !finished);
+    document.getElementById("plus").disabled=(cur>=rounds || finished);
+
+    document.getElementById("pVal").textContent=players;
+    document.getElementById("pDown").disabled=(players<=4);
+    document.getElementById("pUp").disabled=(players>=40);
+
+    document.getElementById("cVal").textContent=courts;
+    document.getElementById("cDown").disabled=(courts<=1);
+    document.getElementById("cUp").disabled=(courts>=maxCourts());
+    document.getElementById("cHint").textContent="макс "+maxCourts()+" · по 4 игрока";
+
+    document.getElementById("wVal").textContent=warmupMin+" мин";
+    document.getElementById("wDown").disabled=(warmupMin<=0);
+    document.getElementById("wUp").disabled=(warmupMin>=20);
+
+    var rd=ms(roundDur), onCourt=4*courts;
+    var restTxt = rest>0
+      ? '<b>'+rest+'</b> '+plu(rest,'отдыхает','отдыхают','отдыхают')+' · '
+      : 'все играют · ';
+    document.getElementById("cfgLine").innerHTML=
+      '<b>'+onCourt+'</b> на кортах · '+restTxt+
+      '<b>'+rounds+'</b> '+plu(rounds,'раунд','раунда','раундов')+' · игра <b>'+rd+'</b> · смена <b>2:00</b>';
+    document.getElementById("foot").innerHTML=
+      players+' игроков · '+courts+' '+plu(courts,'корт','корта','кортов')+
+      ' · '+warmupMin+' мин разминка · '+rounds+' раундов по '+rd+' · до 23 очков.<br>Держи страницу открытой на время турнира.';
+
+    saveState();
+    renderRounds();tick();
+  }
+
+  // ---- wire ----
+  document.getElementById("tile").addEventListener("click",completeRound);
+  document.getElementById("tile").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();completeRound();}});
+  document.getElementById("minus").addEventListener("click",decRound);
+  document.getElementById("plus").addEventListener("click",incRound);
+  document.getElementById("pDown").addEventListener("click",function(){setPlayers(players-1);});
+  document.getElementById("pUp").addEventListener("click",function(){setPlayers(players+1);});
+  document.getElementById("cDown").addEventListener("click",function(){setCourts(courts-1);});
+  document.getElementById("cUp").addEventListener("click",function(){setCourts(courts+1);});
+  document.getElementById("wDown").addEventListener("click",function(){setWarmup(warmupMin-1);});
+  document.getElementById("wUp").addEventListener("click",function(){setWarmup(warmupMin+1);});
+  startInput.addEventListener("change",syncAll);
+  document.getElementById("reset").addEventListener("click",resetAll);
+
+  loadState();
+  rebuild();syncAll();
+  setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
